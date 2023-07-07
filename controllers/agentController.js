@@ -82,7 +82,9 @@ exports.signInAgent = async (req, res) => {
     const password = req.body.password;
 
     if (!(email && password)) {
-      res.status(400).send({ result: false, msg: "All input is required" });
+      return res
+        .status(400)
+        .send({ result: false, msg: "All input is required" });
     }
 
     email = email.toLowerCase();
@@ -111,6 +113,7 @@ exports.signInAgent = async (req, res) => {
 
     //You can add additional attributes to the req.session objects
     req.session.agent_id = agent._id.toString();
+    req.session.env = [];
 
     if (process.env.DEPLOYMENT === "1") {
       res.cookie("jwt", agent.token, {
@@ -262,46 +265,5 @@ exports.updateAgent = async (req, res) => {
       result: false,
       msg: "There was a server error.",
     });
-  }
-};
-
-/**
- * This function is used to remove an agent from the database.
- * @param req
- * @param res
- * @returns {Promise<*>}
- * @author David Morales
- */
-exports.removeAgent = async (req, res) => {
-  if (
-    !req.body.agent_id ||
-    !mongoose.isObjectIdOrHexString(req.body.agent_id)
-  ) {
-    return res.status(400).send({
-      result: false,
-      msg: "Error. Something is wrong with this request.",
-    });
-  }
-
-  try {
-    const agent_id = mongoose.Types.ObjectId(req.body.agent_id);
-
-    Agent.findOneAndDelete({ _id: agent_id }, (err, agent) => {
-      if (err) {
-        console.log(err);
-        return res
-          .status(500)
-          .send({ result: false, msg: "There was a server error." });
-      }
-      return res.send({
-        result: true,
-        msg: "Agent has been deleted.",
-      });
-    });
-  } catch (err) {
-    console.log(err);
-    return res
-      .status(500)
-      .send({ result: false, msg: "There was a server error." });
   }
 };
