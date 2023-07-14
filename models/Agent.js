@@ -6,10 +6,6 @@ const mongoose = require("mongoose");
  */
 const AgentSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      unique: true,
-    },
     first_name: {
       type: String,
       default: "",
@@ -36,11 +32,36 @@ const AgentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    api_enabled: {
+      type: Boolean,
+      default: false,
+    },
+    api_key: {
+      type: String, //to be hashed
+      default: "",
+    },
+    auth_tokens: {
+      type: [
+        {
+          token_type: {
+            type: String,
+            default: "application",
+          },
+          token: String,
+          active: {
+            type: Boolean,
+            default: false,
+          },
+        },
+      ],
+      default: [],
+    },
     env_files: {
       type: [
         {
           env_id: mongoose.Types.ObjectId,
-          key: String,
+          key: String, //hashed
+          api_key: String, //hashed
         },
       ],
     },

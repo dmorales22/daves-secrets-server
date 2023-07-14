@@ -8,7 +8,7 @@ const EnvSchema = new mongoose.Schema(
     },
     env_type: {
       type: String,
-      default: "generic",
+      default: "generic", //deployment, development, password_list, generic
     },
     encrypted_content: {
       type: String,
@@ -64,9 +64,14 @@ const EnvSchema = new mongoose.Schema(
       default: [],
       ref: "Agent",
     },
+    is_backup_env: {
+      type: Boolean,
+      default: false,
+    },
     organization_id: {
       type: mongoose.Types.ObjectId,
       default: null,
+      ref: "Organization",
     },
     api: {
       type: mongoose.Types.Mixed,
