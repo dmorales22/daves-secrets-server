@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
-/**
- *
- * @type {module:mongoose.Schema<any, Model<any, any, any, any>, {}, {}, {}, {}, {timestamps: boolean}, {password: StringConstructor, last_name: StringConstructor, first_name: StringConstructor, email: {unique: boolean, type: StringConstructor}, token: StringConstructor}>}
- */
 const AgentSchema = new mongoose.Schema(
   {
+    agent_type: {
+      type: String,
+      default: "generic", //generic, employee, developer, sysadmin
+    },
     first_name: {
       type: String,
       default: "",
@@ -28,16 +28,16 @@ const AgentSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-    is_hidden: {
-      type: Boolean,
-      default: false,
-    },
     api_enabled: {
       type: Boolean,
       default: false,
     },
-    api_key: {
-      type: String, //to be hashed
+    agent_secret_key_encrypted: {
+      type: String, //encrypted by password
+      default: "",
+    },
+    agent_secret_key_hashed: {
+      type: String, //hashed
       default: "",
     },
     auth_tokens: {
@@ -45,12 +45,13 @@ const AgentSchema = new mongoose.Schema(
         {
           token_type: {
             type: String,
-            default: "application",
+            default: "application", //application, api,
           },
-          token: String,
+          token_key: String, //hashed key
+          content: String, //encrypted content
           active: {
             type: Boolean,
-            default: false,
+            default: true,
           },
         },
       ],
@@ -60,10 +61,10 @@ const AgentSchema = new mongoose.Schema(
       type: [
         {
           env_id: mongoose.Types.ObjectId,
-          key: String, //hashed
-          api_key: String, //hashed
+          key: String, //encrypted by agent key
         },
       ],
+      default: [],
     },
     organization_id: {
       type: mongoose.Types.ObjectId,

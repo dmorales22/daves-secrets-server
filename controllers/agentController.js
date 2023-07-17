@@ -15,7 +15,9 @@ exports.createAgent = async (req, res) => {
     const { first_name, last_name, email, password } = req.body;
 
     if (!(email && password && first_name && last_name)) {
-      res.status(400).send({ result: false, msg: "All input is required." }); // A controller method to create an Agent in the database. Creates a token for this user.
+      return res
+        .status(400)
+        .send({ result: false, msg: "All input is required." }); // A controller method to create an Agent in the database. Creates a token for this user.
     }
 
     const existing_agent = await Agent.findOne({ email: email });

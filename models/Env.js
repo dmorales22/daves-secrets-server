@@ -23,9 +23,13 @@ const EnvSchema = new mongoose.Schema(
       default: [],
     },
     master_key: {
-      //to be hashed by either owner-agent or organization
+      //to be hashed
       type: String,
       default: "",
+    },
+    agent_directory: {
+      type: {},
+      default: {},
     },
     application_access_list: {
       type: [String],
@@ -58,10 +62,6 @@ const EnvSchema = new mongoose.Schema(
     owner_agent_id: {
       type: mongoose.Types.ObjectId,
       default: null,
-    },
-    access_agent_id: {
-      type: [mongoose.Types.ObjectId],
-      default: [],
       ref: "Agent",
     },
     is_backup_env: {
