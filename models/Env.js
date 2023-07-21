@@ -28,7 +28,7 @@ const EnvSchema = new mongoose.Schema(
       default: "",
     },
     agent_directory: {
-      type: {},
+      type: mongoose.Types.Mixed,
       default: {},
     },
     application_access_list: {

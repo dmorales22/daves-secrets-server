@@ -49,10 +49,6 @@ const AgentSchema = new mongoose.Schema(
           },
           token_key: String, //hashed key
           content: String, //encrypted content
-          active: {
-            type: Boolean,
-            default: true,
-          },
         },
       ],
       default: [],
@@ -81,6 +77,16 @@ const AgentSchema = new mongoose.Schema(
     enable_multi_factor: {
       type: Boolean,
       default: false,
+    },
+    encryption_queue: {
+      //To add Env keys after authentication
+      type: [
+        {
+          env_id: mongoose.Types.ObjectId,
+          key: String,
+        },
+      ],
+      default: [],
     },
     api: {
       type: mongoose.Types.Mixed,
