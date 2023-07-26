@@ -1,5 +1,6 @@
 const Agent = require("../models/Agent");
 const jwt = require("jsonwebtoken");
+const argon2 = require("argon2");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
@@ -28,12 +29,13 @@ exports.createAgent = async (req, res) => {
         .send({ result: false, msg: "Agent already exists in the system." });
     }
 
-    const encrypted_password = await bcrypt.hash(password, 10);
+    //const hashed_password = await bcrypt.hash(password, 10);
+    const hashed_password = await argon2.hash(password);
     const agent = await Agent.create({
       first_name,
       last_name,
       email,
-      password: encrypted_password,
+      password: hashed_password,
     });
 
     if (process.env.DEPLOYMENT === "1") {
@@ -99,7 +101,15 @@ exports.signInAgent = async (req, res) => {
         .send({ result: false, msg: "Invalid credentials." });
     }
 
+    /*
     if (!(await bcrypt.compare(password, agent.password))) {
+      return res
+        .status(400)
+        .send({ result: false, msg: "Invalid credentials." });
+    }
+     */
+
+    if (!(await argon2.verify(agent.password, password))) {
       return res
         .status(400)
         .send({ result: false, msg: "Invalid credentials." });
@@ -109,12 +119,13 @@ exports.signInAgent = async (req, res) => {
       { user_id: agent._id, email },
       process.env.TOKEN_KEY,
       {
-        expiresIn: "8h",
+        expiresIn: "24h",
       }
     );
 
     //You can add additional attributes to the req.session objects
     req.session.agent_id = agent._id.toString();
+    req.session.agent_secret_key = "";
     req.session.env = [];
 
     if (process.env.DEPLOYMENT === "1") {

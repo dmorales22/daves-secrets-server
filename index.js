@@ -27,10 +27,10 @@ const DB =
   "?retryWrites=true&w=majority"; //Creates URL string to access the MongoDB server
 
 //const DB = "mongodb://127.0.0.1/testbackend"; //Comment this line if you're not using local server
-const agentRoute = require("./routes/agentRoute")
-const contactRoute = require("./routes/contactRoute");
 const agentRoute = require("./routes/agentRoute");
-const envRoute = require("./routes/envRoute")
+const contactRoute = require("./routes/contactRoute");
+const openRoute = require("./routes/openRoute");
+const envRoute = require("./routes/envRoute");
 const signInRoute = require("./routes/signInRoute");
 
 const oneDay = 1000 * 60 * 60 * 24;
@@ -115,6 +115,7 @@ app.use(express.static("public"));
 
 //Non-protected routes. Should be use for public/unauthenticated routes
 app.use(signInRoute);
+app.use(openRoute);
 
 const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

@@ -12,7 +12,14 @@ const OrganizationSchema = new mongoose.Schema(
     },
     agent_list: {
       type: [
-        { role: String, agent_id: mongoose.Types.ObjectId, active: Boolean },
+        {
+          role: {
+            type: String,
+            default: "user", //admin, user
+          },
+          agent_id: mongoose.Types.ObjectId,
+          active: Boolean,
+        },
       ],
       default: [],
     },
