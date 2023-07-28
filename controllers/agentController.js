@@ -1,7 +1,5 @@
 const Agent = require("../models/Agent");
-const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
-const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
 /**
@@ -29,7 +27,6 @@ exports.createAgent = async (req, res) => {
         .send({ result: false, msg: "Agent already exists in the system." });
     }
 
-    //const hashed_password = await bcrypt.hash(password, 10);
     const hashed_password = await argon2.hash(password);
     const agent = await Agent.create({
       first_name,
@@ -37,24 +34,6 @@ exports.createAgent = async (req, res) => {
       email,
       password: hashed_password,
     });
-
-    if (process.env.DEPLOYMENT === "1") {
-      res.cookie("jwt", agent.token, {
-        expires: new Date(
-          Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
-        ),
-        secure: true,
-        httpOnly: false,
-      });
-    } else {
-      res.cookie("jwt", agent.token, {
-        expires: new Date(
-          Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
-        ),
-        secure: false,
-        httpOnly: true,
-      });
-    }
 
     return res.send({
       result: true,
@@ -88,63 +67,34 @@ exports.signInAgent = async (req, res) => {
     if (!(email && password)) {
       return res
         .status(400)
-        .send({ result: false, msg: "All input is required" });
+        .send({ result: false, msg: "Email and password are required." });
     }
 
     email = email.toLowerCase();
-
-    const agent = await Agent.findOne({ email }).select({ password: 0 });
+    const agent = await Agent.findOne({ email });
 
     if (!agent) {
       return res
-        .status(400)
+        .status(401)
         .send({ result: false, msg: "Invalid credentials." });
     }
-
-    /*
-    if (!(await bcrypt.compare(password, agent.password))) {
-      return res
-        .status(400)
-        .send({ result: false, msg: "Invalid credentials." });
-    }
-     */
 
     if (!(await argon2.verify(agent.password, password))) {
       return res
-        .status(400)
+        .status(401)
         .send({ result: false, msg: "Invalid credentials." });
     }
 
-    const token = jwt.sign(
-      { user_id: agent._id, email },
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "24h",
-      }
-    );
+    let organization_id = "";
+
+    if (agent.organization_id) {
+      organization_id = organization_id.toString();
+    }
 
     //You can add additional attributes to the req.session objects
     req.session.agent_id = agent._id.toString();
     req.session.agent_secret_key = "";
-    req.session.env = [];
-
-    if (process.env.DEPLOYMENT === "1") {
-      res.cookie("jwt", agent.token, {
-        expires: new Date(
-          Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
-        ),
-        secure: true,
-        httpOnly: false,
-      });
-    } else {
-      res.cookie("jwt", agent.token, {
-        expires: new Date(
-          Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000
-        ),
-        secure: false,
-        httpOnly: true,
-      });
-    }
+    req.session.organization_id = organization_id;
 
     return res.send({
       result: true,
@@ -174,7 +124,6 @@ exports.signInAgent = async (req, res) => {
  */
 exports.logoutAgent = async (req, res) => {
   req.session.destroy(function (err) {
-    res.clearCookie("jwt");
     res.send("You are signed out.");
   });
 };

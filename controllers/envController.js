@@ -1,7 +1,8 @@
 const Env = require("../models/Env");
 const mongoose = require("mongoose");
 const { nanoid, customAlphabet } = require("nanoid");
-
+const argon2 = require("argon2");
+const { encrypt, decrypt } = require("../utilities/crypto");
 /**
  *
  * @param req
@@ -43,6 +44,7 @@ exports.createEnv = async (req, res) => {
 
     master_key = nanoid(32);
     const agent_access_key = nanoid(32);
+    const agent_secret_key = req.session.agent_secret_key;
 
     agent_directory[req.session.agent_id] = {
       permissions: {
@@ -53,8 +55,8 @@ exports.createEnv = async (req, res) => {
         delete_keys: true,
       },
       ip_whitelist: [],
-      agent_access_key: "", //hashed
-      env_key: "", //encrypted master key (encrypted by agent_access_key)
+      agent_access_key: await argon2.hash(agent_access_key), //hashed
+      env_key: encrypt(master_key, agent_secret_key), //encrypted master key (encrypted by agent_secret_key)
     };
 
     //todo update agent

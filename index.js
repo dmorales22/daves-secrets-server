@@ -7,7 +7,7 @@ const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const fs = require("fs");
 const https = require("https");
-const auth = require("./middleware/auth");
+const { verifySession, verifyJWTToken } = require("./middleware/auth");
 const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 const multer = require("multer");
@@ -28,7 +28,6 @@ const DB =
 
 //const DB = "mongodb://127.0.0.1/testbackend"; //Comment this line if you're not using local server
 const agentRoute = require("./routes/agentRoute");
-const contactRoute = require("./routes/contactRoute");
 const openRoute = require("./routes/openRoute");
 const envRoute = require("./routes/envRoute");
 const signInRoute = require("./routes/signInRoute");
@@ -54,6 +53,7 @@ if (process.env.DEPLOYMENT === "1") {
         autoRemove: "native",
       }),
       cookie: {
+        sameSite: "Strict",
         maxAge: oneDay,
         httpOnly: false,
         secure: true,
@@ -76,6 +76,7 @@ if (process.env.DEPLOYMENT === "1") {
         autoRemove: "native",
       }),
       cookie: {
+        sameSite: "Strict",
         maxAge: oneDay,
         httpOnly: true,
         secure: false,
@@ -119,18 +120,17 @@ app.use(openRoute);
 
 const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
+  max: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 app.use(rateLimiter);
 app.use("", openRoute);
-app.use(auth); //Applies middleware to the routes below.
+app.use(verifySession); //Applies middleware to the routes below.
 
 //Protected routes that require a token to access them. See middleware/auth.js for more details
 app.use("/", agentRoute);
 app.use("/", envRoute);
-//app.use("/", contactRoute);
 
 app.use(express.static(__dirname + "/static", { dotfiles: "allow" }));
 
