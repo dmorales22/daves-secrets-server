@@ -1,6 +1,12 @@
 const Agent = require("../models/Agent");
 const argon2 = require("argon2");
 const mongoose = require("mongoose");
+const {
+  createSecretKey,
+  encrypt,
+  decrypt,
+  generatePBKDF,
+} = require("../utilities/crypto");
 
 /**
  * This function is to create an agent in the database.
@@ -28,10 +34,30 @@ exports.createAgent = async (req, res) => {
     }
 
     const hashed_password = await argon2.hash(password);
+    const agent_secret_key = createSecretKey(32); //Generates agent secret key
+
+    const pbkdf_password_object = generatePBKDF(password); //Generate PBKDF (Password-Based Key Derivation Function 2)
+    const pbkdf_password_key = pbkdf_password_object.derived_key;
+    const pbkdf_password_salt = pbkdf_password_object.salt;
+
+    const agent_secret_key_hashed = await argon2.hash(agent_secret_key);
+    const encrypted_agent_secret_key = encrypt(
+      agent_secret_key,
+      pbkdf_password_key
+    ); //Used PBKDF to encrypt master key
+
+    const agent_pbkdf = {
+      salt: pbkdf_password_salt,
+      key: await argon2.hash(pbkdf_password_key), //hashed
+    };
+
     const agent = await Agent.create({
       first_name,
       last_name,
       email,
+      agent_pbkdf: agent_pbkdf,
+      agent_secret_key_hashed: agent_secret_key_hashed,
+      agent_secret_key_encrypted: encrypted_agent_secret_key,
       password: hashed_password,
     });
 

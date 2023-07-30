@@ -36,8 +36,48 @@ const decrypt = (hash, secretKey) => {
 
   return decrypted.toString();
 };
+const generatePBKDF = (password, salt) => {
+  let salt_buffer;
+
+  if (!salt) {
+    salt_buffer = crypto.randomBytes(16); // Generate a random salt (16 bytes)
+  } else {
+    salt_buffer = Buffer.from(salt, "hex");
+  }
+
+  const iterations = 100000; // Recommended number of iterations
+
+  crypto.pbkdf2(
+    password,
+    salt_buffer,
+    iterations,
+    32,
+    "sha256",
+    (err, derivedKey) => {
+      if (err) throw err;
+      // Now, 'derivedKey' can be used as the encryption key for AES-256-CTR
+      // The derivedKey is a 32-byte buffer, suitable for AES-256
+      return {
+        salt: salt_buffer.toString("hex"),
+        derived_key: derivedKey.toString("hex"),
+      };
+    }
+  );
+};
+
+const createSecretKey = (size) => {
+  if (!size) {
+    size = 32;
+  }
+
+  const buffer = crypto.randomBytes(size);
+
+  return buffer.toString("hex");
+};
 
 module.exports = {
+  createSecretKey,
+  generatePBKDF,
   encrypt,
   decrypt,
 };

@@ -32,6 +32,16 @@ const AgentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    agent_pbkdf: {
+      salt: {
+        type: String,
+        default: "",
+      },
+      key: {
+        type: String,
+        default: "",
+      },
+    },
     agent_secret_key_encrypted: {
       type: String, //encrypted by password
       default: "",

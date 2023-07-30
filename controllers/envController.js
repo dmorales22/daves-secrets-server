@@ -1,8 +1,11 @@
+const Agent = require("../models/Agent");
 const Env = require("../models/Env");
 const mongoose = require("mongoose");
 const { nanoid, customAlphabet } = require("nanoid");
 const argon2 = require("argon2");
-const { encrypt, decrypt } = require("../utilities/crypto");
+const { encrypt, decrypt, createSecretKey } = require("../utilities/crypto");
+const crypto = require("crypto");
+
 /**
  *
  * @param req
@@ -42,8 +45,8 @@ exports.createEnv = async (req, res) => {
       organization_id = mongoose.Types.ObjectId(req.session.organization_id);
     }
 
-    master_key = nanoid(32);
-    const agent_access_key = nanoid(32);
+    master_key = createSecretKey(32);
+    const agent_access_key = createSecretKey(32);
     const agent_secret_key = req.session.agent_secret_key;
 
     agent_directory[req.session.agent_id] = {
@@ -58,9 +61,6 @@ exports.createEnv = async (req, res) => {
       agent_access_key: await argon2.hash(agent_access_key), //hashed
       env_key: encrypt(master_key, agent_secret_key), //encrypted master key (encrypted by agent_secret_key)
     };
-
-    //todo update agent
-    //todo hash key
 
     const newEnv = await Env.create({
       env_name: req.body.env_name,
@@ -81,6 +81,17 @@ exports.createEnv = async (req, res) => {
       is_backup_env: req.body.is_backup_env,
       organization_id: organization_id,
     });
+
+    let agent_update_object = {};
+    const env_file_entry = {
+      env_id: newEnv._id,
+      key: encrypt(agent_access_key, agent_secret_key),
+    };
+    agent_update_object["$push"] = {
+      env_files: env_file_entry,
+    };
+
+    await Agent.updateOne({ _id: owner_agent_id }, agent_update_object);
 
     await newEnv.save();
     return res.send({ result: true, msg: "New Env was successfully created." });
