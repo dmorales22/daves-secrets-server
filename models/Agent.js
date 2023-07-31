@@ -2,9 +2,13 @@ const mongoose = require("mongoose");
 
 const AgentSchema = new mongoose.Schema(
   {
-    agent_type: {
+    user_type: {
       type: String,
-      default: "generic", //generic, employee, developer, sysadmin
+      default: "user", //user, system, application
+    },
+    user_tier: {
+      type: String,
+      default: "free", //free, premium, trial, enterprise
     },
     first_name: {
       type: String,
@@ -66,14 +70,14 @@ const AgentSchema = new mongoose.Schema(
     env_files: {
       type: [
         {
-          env_id: mongoose.Types.ObjectId,
+          env_id: mongoose.Schema.Types.ObjectId,
           key: String, //encrypted by agent key
         },
       ],
       default: [],
     },
     organization_id: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
     allow_email_notifications: {
@@ -92,18 +96,18 @@ const AgentSchema = new mongoose.Schema(
       //To add Env keys after authentication
       type: [
         {
-          env_id: mongoose.Types.ObjectId,
+          env_id: mongoose.Schema.Types.ObjectId,
           key: String,
         },
       ],
       default: [],
     },
     api: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     additional_data: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },

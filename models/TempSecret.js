@@ -36,7 +36,7 @@ const TempSecretSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    agent_access_list: { type: [mongoose.Types.ObjectId], default: [] },
+    agent_access_list: { type: [mongoose.Schema.Types.ObjectId], default: [] },
     ip_access_list: {
       type: [String],
       default: [],

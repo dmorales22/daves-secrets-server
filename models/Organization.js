@@ -17,7 +17,7 @@ const OrganizationSchema = new mongoose.Schema(
             type: String,
             default: "user", //admin, user
           },
-          agent_id: mongoose.Types.ObjectId,
+          agent_id: mongoose.Schema.Types.ObjectId,
           active: Boolean,
         },
       ],
@@ -28,11 +28,11 @@ const OrganizationSchema = new mongoose.Schema(
       default: "active", //active, suspended, orphan
     },
     api: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     additional_data: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },

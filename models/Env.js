@@ -28,7 +28,7 @@ const EnvSchema = new mongoose.Schema(
       default: "",
     },
     agent_directory: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: {},
     },
     application_access_list: {
@@ -60,7 +60,7 @@ const EnvSchema = new mongoose.Schema(
       default: false,
     },
     owner_agent_id: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       default: null,
       ref: "Agent",
     },
@@ -69,16 +69,16 @@ const EnvSchema = new mongoose.Schema(
       default: false,
     },
     organization_id: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       default: null,
       ref: "Organization",
     },
     api: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     additional_data: {
-      type: mongoose.Types.Mixed,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },

@@ -1,13 +1,11 @@
 const Agent = require("../models/Agent");
 const Env = require("../models/Env");
 const mongoose = require("mongoose");
-const { nanoid, customAlphabet } = require("nanoid");
 const argon2 = require("argon2");
 const { encrypt, decrypt, createSecretKey } = require("../utilities/crypto");
-const crypto = require("crypto");
 
 /**
- *
+ * This function creates an Env document in the database.
  * @param req
  * @param res
  * @returns {Promise<*>}

@@ -2,19 +2,20 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const app = require("./index");
 dotenv.config({ path: "./.env" });
-/* Uncomment to enable auth creds to DB
-const DB =
-  "mongodb+srv://" +
-  process.env.MONGODB_USER +
-  ":" +
-  process.env.DB_PASSWORD +
-  "@" +
-  process.env.MONGODB_SERVER +
-  "/" +
-  process.env.MONGODB_NAME +
-  "?retryWrites=true&w=majority";
-*/
-const DB = "mongodb://127.0.0.1/testbackend"; //Comment this line if you're not using local server
+let DB = "mongodb://127.0.0.1/testbackend";
+
+if (process.env.USE_EXTERNAL_DATABASE === "1") {
+  DB =
+    "mongodb://" +
+    process.env.MONGODB_USER +
+    ":" +
+    process.env.DB_PASSWORD +
+    "@" +
+    process.env.MONGODB_SERVER +
+    "/" +
+    process.env.MONGODB_NAME +
+    "?retryWrites=true&w=majority"; //Creates URL string to access the MongoDB server
+}
 
 // Connect to MONGODB server.
 mongoose.connect(

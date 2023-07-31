@@ -117,15 +117,27 @@ exports.signInAgent = async (req, res) => {
       organization_id = organization_id.toString();
     }
 
-    //You can add additional attributes to the req.session objects
+    const generated_pdkdf_key = generatePBKDF(password, agent.agent_pbkdf.salt);
+    const result = await argon2.verify(
+      agent.agent_pbkdf.key,
+      generated_pdkdf_key.derived_key
+    );
+
+    if (!result) {
+      return res
+        .status(500)
+        .send({ result: false, msg: "Something went wrong." });
+    }
+
     req.session.agent_id = agent._id.toString();
-    req.session.agent_secret_key = "";
+    req.session.agent_secret_key = generated_pdkdf_key.derived_key;
     req.session.organization_id = organization_id;
+    req.session.user_type = "user";
+    req.session.user_tier = "free";
 
     return res.send({
       result: true,
       msg: "Agent authentication is successful.",
-      token: token,
       data: {
         first_name: agent.first_name,
         middle_name: agent.middle_name,
