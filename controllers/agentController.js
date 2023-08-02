@@ -17,29 +17,41 @@ const {
  */
 exports.createAgent = async (req, res) => {
   try {
-    const { first_name, last_name, email, password } = req.body;
+    const { first_name, last_name, email, password, phone } = req.body;
 
-    if (!(email && password && first_name && last_name)) {
+    if (!(email && password)) {
       return res
         .status(400)
         .send({ result: false, msg: "All input is required." }); // A controller method to create an Agent in the database. Creates a token for this user.
     }
 
-    const existing_agent = await Agent.findOne({ email: email });
+    let agent_filter = {
+      $or: [{ email: email }, { phone: phone }],
+    };
+
+    if (!phone) {
+      agent_filter = { email: email };
+    }
+
+    //todo check if phone number is valid
+
+    const existing_agent = await Agent.findOne(agent_filter).select({
+      email: 1,
+      phone: 1,
+    });
 
     if (existing_agent) {
-      return res
-        .status(409)
-        .send({ result: false, msg: "Agent already exists in the system." });
+      return res.status(409).send({
+        result: false,
+        msg: "There is already an account associated with this email and/or phone.",
+      });
     }
 
     const hashed_password = await argon2.hash(password);
-    const agent_secret_key = createSecretKey(32); //Generates agent secret key
-
-    const pbkdf_password_object = generatePBKDF(password); //Generate PBKDF (Password-Based Key Derivation Function 2)
+    const agent_secret_key = createSecretKey(16); //Generates agent secret key
+    const pbkdf_password_object = await generatePBKDF(password); //Generate PBKDF (Password-Based Key Derivation Function 2)
     const pbkdf_password_key = pbkdf_password_object.derived_key;
     const pbkdf_password_salt = pbkdf_password_object.salt;
-
     const agent_secret_key_hashed = await argon2.hash(agent_secret_key);
     const encrypted_agent_secret_key = encrypt(
       agent_secret_key,
@@ -59,14 +71,18 @@ exports.createAgent = async (req, res) => {
       agent_secret_key_hashed: agent_secret_key_hashed,
       agent_secret_key_encrypted: encrypted_agent_secret_key,
       password: hashed_password,
+      phone: phone,
     });
 
     return res.send({
       result: true,
       msg: "Agent has been successfully created.",
       data: {
+        id: agent._id.toString(),
         first_name: agent.first_name,
         last_name: agent.last_name,
+        email: agent.email,
+        phone: agent.phone,
       },
     });
   } catch (err) {
@@ -117,7 +133,10 @@ exports.signInAgent = async (req, res) => {
       organization_id = organization_id.toString();
     }
 
-    const generated_pdkdf_key = generatePBKDF(password, agent.agent_pbkdf.salt);
+    const generated_pdkdf_key = await generatePBKDF(
+      password,
+      agent.agent_pbkdf.salt
+    ); //generates secret key to compare to hash
     const result = await argon2.verify(
       agent.agent_pbkdf.key,
       generated_pdkdf_key.derived_key

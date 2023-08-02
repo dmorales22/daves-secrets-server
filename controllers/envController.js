@@ -43,8 +43,8 @@ exports.createEnv = async (req, res) => {
       organization_id = mongoose.Types.ObjectId(req.session.organization_id);
     }
 
-    master_key = createSecretKey(32);
-    const agent_access_key = createSecretKey(32);
+    master_key = createSecretKey(16);
+    const agent_access_key = createSecretKey(16);
     const agent_secret_key = req.session.agent_secret_key;
 
     agent_directory[req.session.agent_id] = {

@@ -30,7 +30,7 @@ const AgentSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      unique: true,
+      default: "",
     },
     api_enabled: {
       type: Boolean,
