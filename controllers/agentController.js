@@ -154,6 +154,7 @@ exports.signInAgent = async (req, res) => {
     req.session.user_type = "user";
     req.session.user_tier = "free";
 
+    console.log(req.session)
     return res.send({
       result: true,
       msg: "Agent authentication is successful.",

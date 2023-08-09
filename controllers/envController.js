@@ -44,6 +44,17 @@ exports.createEnv = async (req, res) => {
     }
 
     master_key = createSecretKey(16);
+
+    if (req.body.content) {
+      const content = req.body.content;
+      //todo check schema of content for accepted data types
+      const content_string = content.toString(); //Converts array into string
+      encrypted_content = encrypt(content_string, master_key);
+    } else {
+      encrypted_content = encrypt("[]", master_key); //Empty array string if no content is passed
+    }
+
+    const hashed_master_key = await argon2.hash(master_key);
     const agent_access_key = createSecretKey(16);
     const agent_secret_key = req.session.agent_secret_key;
 
@@ -66,7 +77,7 @@ exports.createEnv = async (req, res) => {
       encrypted_content: encrypted_content,
       description: req.body.description,
       tags: req.body.tags,
-      master_key: master_key,
+      master_key: hashed_master_key,
       agent_directory: agent_directory,
       application_access_list: req.body.application_access_list,
       use_application_access_list: req.body.use_application_access_list,
@@ -107,7 +118,63 @@ exports.createEnv = async (req, res) => {
  * @author David Morales
  */
 exports.getEnvById = async (req, res) => {
+  if (
+    !req.body.env_id ||
+    !mongoose.isObjectIdOrHexString(req.body.env_id) ||
+    !req.session.agent_id ||
+    !mongoose.isObjectIdOrHexString(req.session.agent_id)
+  ) {
+    return res.status(400).send({
+      result: false,
+      msg: "There's something wrong with this request.",
+    });
+  }
   try {
+    const env_id = req.body.env_id;
+    const agent_id = req.session.agent_id;
+    const agent_secret_key = req.session.agent_secret_key;
+    const env_filter = {
+      _id: mongoose.Types.ObjectId(env_id),
+    };
+    let env = await Env.findOne(env_filter);
+
+    if (!env) {
+      return res
+        .status(404)
+        .send({ result: false, msg: "Env document does not exist!" });
+    }
+
+    if (!env?.agent_directory[agent_id]) {
+      return res.status(403).send({
+        result: false,
+        msg: "User does not have access to this resource.",
+      });
+    }
+
+    //todo write ip address checker
+    //todo write device checker
+    //todo write application checker
+
+    const agent_entry = env.agent_directory[agent_id];
+    const decrypted_master_key = decrypt(agent_entry.key, agent_secret_key);
+    const decrypted_env_content = decrypt(
+      env.encrypted_content,
+      decrypted_master_key
+    );
+    const parsed_env_content = JSON.parse(decrypted_env_content);
+    //todo check keys for agent permissions
+    const env_document = {
+      env_name: env.env_name,
+      env_type: env.env_type,
+      env_status: env.env_status,
+      content: parsed_env_content,
+      description: env.description,
+      tags: env.tags,
+      is_backup_env: env.is_backup_env,
+      organization_id: env.organization_id
+    }
+
+    return res.send(env_document);
   } catch (err) {
     console.log(err);
     return res.status(500).send({ result: false, msg: "There was a server." });

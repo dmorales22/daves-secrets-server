@@ -10,6 +10,10 @@ const EnvSchema = new mongoose.Schema(
       type: String,
       default: "generic", //deployment, development, password_list, generic
     },
+    env_status: {
+      type: String,
+      default: "active", //active, disabled,
+    },
     encrypted_content: {
       type: String,
       default: "",
@@ -65,6 +69,10 @@ const EnvSchema = new mongoose.Schema(
       ref: "Agent",
     },
     is_backup_env: {
+      type: Boolean,
+      default: false,
+    },
+    flagged_for_deletion: {
       type: Boolean,
       default: false,
     },
