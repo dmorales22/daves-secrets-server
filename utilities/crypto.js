@@ -4,7 +4,8 @@ const algorithm = "aes-256-ctr";
 /**
  * This function encrypts text by using an encryption algorithm and key.
  * It returns an object of its iv and content in hex string
- * @param {string} text
+ * @param {string} text -
+ * @param {string} secretKey
  * @returns {string}
  */
 const encrypt = (text, secretKey) => {
@@ -19,23 +20,24 @@ const encrypt = (text, secretKey) => {
 /**
  * This function decrypts a secret key from an encrypted object that contains an iv and content in hex string.
  * Returns decrypted string
- * @param {iv: string, content: string} hash
  * @returns {string}
  */
-const decrypt = (hash, secretKey) => {
-  const textParts = hash.split(":");
-  const decipher = crypto.createDecipheriv(
-    algorithm,
-    secretKey,
-    Buffer.from(textParts[0], "hex")
-  );
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(textParts[1], "hex")),
-    decipher.final(),
-  ]);
+async function decrypt(hash, secretKey) {
+  return new Promise((resolve) => {
+    const textParts = hash.split(":");
+    const decipher = crypto.createDecipheriv(
+      algorithm,
+      secretKey,
+      Buffer.from(textParts[0], "hex")
+    );
+    const decrypted = Buffer.concat([
+      decipher.update(Buffer.from(textParts[1], "hex")),
+      decipher.final(),
+    ]);
 
-  return decrypted.toString();
-};
+    resolve(decrypted.toString());
+  });
+}
 async function generatePBKDF(password, salt) {
   let salt_buffer;
 

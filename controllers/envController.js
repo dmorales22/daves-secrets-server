@@ -6,8 +6,10 @@ const { encrypt, decrypt, createSecretKey } = require("../utilities/crypto");
 
 /**
  * This function creates an Env document in the database.
- * @param req
- * @param res
+ * @param {Request} req - Request object
+ * @param {string} req.body.env_name - A string of the name of the Env document.
+ *
+ * @param {Response} res - Response object
  * @returns {Promise<*>}
  * @author David Morales
  */
@@ -17,9 +19,9 @@ exports.createEnv = async (req, res) => {
     !mongoose.isObjectIdOrHexString(req.session.agent_id) ||
     !req.session.agent_secret_key
   ) {
-    return res.status(400).send({
+    return res.status(403).send({
       result: false,
-      msg: "There's something wrong with this request.",
+      msg: "Forbidden!",
     });
   }
   try {
@@ -106,7 +108,9 @@ exports.createEnv = async (req, res) => {
     return res.send({ result: true, msg: "New Env was successfully created." });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ result: false, msg: "There was a server." });
+    return res
+      .status(500)
+      .send({ result: false, msg: "There was a server error." });
   }
 };
 
@@ -139,6 +143,7 @@ exports.getEnvById = async (req, res) => {
     let env = await Env.findOne(env_filter);
 
     if (!env) {
+      //Checks if Env document exists
       return res
         .status(404)
         .send({ result: false, msg: "Env document does not exist!" });
@@ -156,11 +161,13 @@ exports.getEnvById = async (req, res) => {
     //todo write application checker
 
     const agent_entry = env.agent_directory[agent_id];
-    const decrypted_master_key = decrypt(agent_entry.key, agent_secret_key);
-    const decrypted_env_content = decrypt(
+    const agent_env_key = agent_entry.env_key;
+    const decrypted_master_key = await decrypt(agent_env_key, agent_secret_key);
+    const decrypted_env_content = await decrypt(
       env.encrypted_content,
       decrypted_master_key
     );
+
     const parsed_env_content = JSON.parse(decrypted_env_content);
     //todo check keys for agent permissions
     const env_document = {
@@ -171,13 +178,16 @@ exports.getEnvById = async (req, res) => {
       description: env.description,
       tags: env.tags,
       is_backup_env: env.is_backup_env,
-      organization_id: env.organization_id
-    }
+      organization_id: env.organization_id,
+    };
 
+    //todo write logger (envAccessLog) function
     return res.send(env_document);
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ result: false, msg: "There was a server." });
+    return res
+      .status(500)
+      .send({ result: false, msg: "There was a server error." });
   }
 };
 
@@ -189,10 +199,49 @@ exports.getEnvById = async (req, res) => {
  * @author David Morales
  */
 exports.updateEnvById = async (req, res) => {
+  if (
+    !req.body.env_id ||
+    !mongoose.isObjectIdOrHexString(req.body.env_id) ||
+    !req.session.agent_id ||
+    !mongoose.isObjectIdOrHexString(req.session.agent_id)
+  ) {
+    return res.status(400).send({
+      result: false,
+      msg: "There's something wrong with this request.",
+    });
+  }
   try {
+    const env_id = req.body.env_id;
+    const agent_id = req.session.agent_id;
+    const agent_secret_key = req.session.agent_secret_key;
+    const env_filter = {
+      _id: mongoose.Types.ObjectId(env_id),
+    };
+    let env = await Env.findOne(env_filter);
+
+    if (!env) {
+      //Checks if Env document exists
+      return res
+        .status(404)
+        .send({ result: false, msg: "Env document does not exist!" });
+    }
+
+    if (!env?.agent_directory[agent_id]) {
+      return res.status(403).send({
+        result: false,
+        msg: "User does not have access to this resource.",
+      });
+    }
+
+    const updated_env = req.body.update_env;
+
+    //todo check for certain fields
+    return res.send({ result: true, msg: "Env successfully updated!" });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ result: false, msg: "There was a server." });
+    return res
+      .status(500)
+      .send({ result: false, msg: "There was a server error." });
   }
 };
 
@@ -207,7 +256,9 @@ exports.softDeleteEnv = async (req, res) => {
   try {
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ result: false, msg: "There was a server." });
+    return res
+      .status(500)
+      .send({ result: false, msg: "There was a server error." });
   }
 };
 
@@ -222,6 +273,8 @@ exports.hardDeleteEnv = async (req, res) => {
   try {
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ result: false, msg: "There was a server." });
+    return res
+      .status(500)
+      .send({ result: false, msg: "There was a server error." });
   }
 };
